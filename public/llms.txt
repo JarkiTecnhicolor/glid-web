@@ -1,0 +1,41 @@
+# Glid — Health Organizer Platform
+
+> Glid is a Ukrainian health-tech platform that helps users find doctors, book appointments, and manage their family's medical records — all in one place.
+
+## Overview
+
+Glid (glid.com.ua) is a digital health organizer built for the Ukrainian market. The platform connects patients with verified doctors and clinics, offering:
+
+- Doctor search by specialty, city, and availability
+- Online consultation booking
+- Clinic directory with reviews and ratings
+- Personal health cabinet for managing appointments and medical records
+- Family health management (multiple profiles)
+- Lab results tracking
+
+## Key Pages
+
+- [Home](https://glid-web.vercel.app/): Main landing page with service overview
+- [Doctors](https://glid-web.vercel.app/likari): Search and browse doctors by specialty
+- [Clinics](https://glid-web.vercel.app/kliniky): Browse medical clinics and facilities
+- [Online Consultations](https://glid-web.vercel.app/onlayn-konsultaciyi): Book video consultations
+- [About Us](https://glid-web.vercel.app/pro-nas): Company mission and team
+- [About the App](https://glid-web.vercel.app/pro-zastosunok): Mobile app features (iOS & Android)
+- [Blog](https://glid-web.vercel.app/blog): Health articles and medical advice
+
+## Medical Specialties Available
+
+General Practice, Pediatrics, Dermatology, Cardiology, Neurology, Gynecology, Ophthalmology, ENT (Otolaryngology), Urology, Endocrinology, Orthopedics, Psychiatry, Dentistry, Gastroenterology, Pulmonology, Allergology, and more.
+
+## Technology
+
+- Built with Next.js (App Router), deployed on Vercel
+- Ukrainian language (uk-UA) as primary
+- Mobile-first responsive design
+- REST API backend on AWS
+
+## Contact
+
+- Website: https://glid-web.vercel.app
+- Language: Ukrainian (uk)
+- Market: Ukraine
