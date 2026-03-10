@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { Suspense } from 'react'
@@ -8,8 +8,14 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { DoctorCard } from '@/components/doctors/DoctorCard'
 import { DoctorFilters } from '@/components/doctors/DoctorFilters'
+import { DoctorCardSkeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 import { doctorsApi } from '@/lib/api/doctors'
 import { PartnerCTASection } from '@/components/home/PartnerCTASection'
+import Link from 'next/link'
+import { buttonVariants } from '@/components/ui/button'
+import { AxiosError } from 'axios'
 
 function DoctorsContent() {
   const router = useRouter()
@@ -23,13 +29,17 @@ function DoctorsContent() {
   const [localSearch, setLocalSearch] = useState(search ?? '')
   const [filtersOpen, setFiltersOpen] = useState(false)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['doctors', { search, specialityId, isOnline }],
     queryFn: () => doctorsApi.getDoctors({ search, specialityId, isOnline, limit: 20 }),
+    retry: false,
   })
 
   const doctors = data?.data ?? []
   const total = data?.total ?? 0
+
+  const isAuthError = error instanceof AxiosError && error.response?.status === 401
+  const isNetworkError = error instanceof AxiosError && !error.response
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -40,6 +50,66 @@ function DoctorsContent() {
       params.delete('search')
     }
     router.push(`/likari?${params.toString()}`)
+  }
+
+  function renderContent() {
+    if (isLoading) {
+      return (
+        <div className="space-y-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <DoctorCardSkeleton key={i} />
+          ))}
+        </div>
+      )
+    }
+
+    if (isError) {
+      if (isAuthError) {
+        return (
+          <ErrorState
+            variant="auth"
+            action={
+              <div className="flex gap-3">
+                <Link href="/auth/login" className={buttonVariants({ size: 'sm' })}>
+                  Увійти
+                </Link>
+                <Link href="/auth/register" className={buttonVariants({ size: 'sm', variant: 'outline' })}>
+                  Реєстрація
+                </Link>
+              </div>
+            }
+          />
+        )
+      }
+
+      if (isNetworkError) {
+        return <ErrorState variant="network" onRetry={() => refetch()} />
+      }
+
+      return <ErrorState variant="server" onRetry={() => refetch()} />
+    }
+
+    if (doctors.length === 0) {
+      return (
+        <EmptyState
+          icon={
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          }
+          title="Лікарів не знайдено"
+          description="Спробуйте змінити параметри пошуку або фільтри"
+        />
+      )
+    }
+
+    return (
+      <div className="space-y-4">
+        {doctors.map((doctor) => (
+          <DoctorCard key={doctor.id} doctor={doctor} />
+        ))}
+      </div>
+    )
   }
 
   return (
@@ -112,25 +182,7 @@ function DoctorsContent() {
       {/* Results */}
       <section className="py-10">
         <div className="container mx-auto px-4 md:px-6">
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-32 rounded-2xl bg-card border border-border animate-pulse" />
-              ))}
-            </div>
-          ) : doctors.length === 0 ? (
-            <div className="text-center py-20 text-muted-foreground">
-              <div className="text-5xl mb-4">🔍</div>
-              <p className="text-lg font-medium">Лікарів не знайдено</p>
-              <p className="mt-2 text-sm">Спробуйте змінити параметри пошуку</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {doctors.map((doctor) => (
-                <DoctorCard key={doctor.id} doctor={doctor} />
-              ))}
-            </div>
-          )}
+          {renderContent()}
         </div>
       </section>
 

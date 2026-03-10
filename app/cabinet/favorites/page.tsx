@@ -3,11 +3,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { favoritesApi } from '@/lib/api/favorites'
+import { FavoriteDoctorSkeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 
 export default function FavoritesPage() {
   const queryClient = useQueryClient()
 
-  const { data: favorites, isLoading } = useQuery({
+  const { data: favorites, isLoading, isError, refetch } = useQuery({
     queryKey: ['favorite-doctors'],
     queryFn: () => favoritesApi.getFavoriteDoctors(),
   })
@@ -24,17 +27,22 @@ export default function FavoritesPage() {
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 rounded-2xl bg-card border border-border animate-pulse" />
+            <FavoriteDoctorSkeleton key={i} />
           ))}
         </div>
+      ) : isError ? (
+        <ErrorState variant="server" onRetry={() => refetch()} />
       ) : !favorites || favorites.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground">
-          <p className="text-4xl mb-3">❤️</p>
-          <p className="font-medium">Збережених лікарів немає</p>
-          <Link href="/likari" className="mt-4 inline-block text-sm text-primary hover:underline">
-            Знайти лікаря →
-          </Link>
-        </div>
+        <EmptyState
+          icon={
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          }
+          title="Збережених лікарів немає"
+          description="Додайте лікарів до збережених, щоб швидко їх знаходити"
+          action={{ label: 'Знайти лікаря', href: '/likari' }}
+        />
       ) : (
         <div className="space-y-3">
           {favorites.map((doctor) => {
@@ -65,10 +73,12 @@ export default function FavoritesPage() {
                 </div>
                 <button
                   onClick={() => toggle.mutate(doctor.id)}
-                  className="text-red-400 hover:text-red-600 transition-colors text-xl"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-support-error hover:bg-support-error-100 transition-colors"
                   aria-label="Видалити зі збережених"
                 >
-                  ❤️
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
                 </button>
               </div>
             )

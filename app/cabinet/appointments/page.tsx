@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { appointmentsApi } from '@/lib/api/appointments'
 import { AppointmentCard } from '@/components/cabinet/AppointmentCard'
+import { AppointmentCardSkeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 import { cn } from '@/lib/utils'
 
 type StatusFilter = 'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled'
@@ -16,10 +19,18 @@ const STATUS_TABS: { key: StatusFilter; label: string }[] = [
   { key: 'cancelled', label: 'Скасовані' },
 ]
 
+const EMPTY_MESSAGES: Record<StatusFilter, string> = {
+  all: 'У вас поки немає записів',
+  pending: 'Немає записів що очікують',
+  confirmed: 'Немає підтверджених записів',
+  completed: 'Немає завершених записів',
+  cancelled: 'Немає скасованих записів',
+}
+
 export default function AppointmentsPage() {
   const [status, setStatus] = useState<StatusFilter>('all')
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['appointments', { status }],
     queryFn: () =>
       appointmentsApi.getUserAppointments(status !== 'all' ? { status } : undefined),
@@ -52,14 +63,22 @@ export default function AppointmentsPage() {
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 rounded-2xl bg-card border border-border animate-pulse" />
+            <AppointmentCardSkeleton key={i} />
           ))}
         </div>
+      ) : isError ? (
+        <ErrorState variant="server" onRetry={() => refetch()} />
       ) : appointments.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground">
-          <p className="text-4xl mb-3">📅</p>
-          <p className="font-medium">Записів немає</p>
-        </div>
+        <EmptyState
+          icon={
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          }
+          title={EMPTY_MESSAGES[status]}
+          description="Знайдіть лікаря та запишіться на прийом"
+          action={{ label: 'Знайти лікаря', href: '/likari' }}
+        />
       ) : (
         <div className="space-y-3">
           {appointments.map((appt) => (
