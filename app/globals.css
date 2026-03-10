@@ -89,23 +89,23 @@
 
 :root {
   /* Glid brand palette */
-  --glid-cream: oklch(0.930 0.024 80);
-  --glid-green: oklch(0.548 0.128 151);
-  --glid-green-dark: oklch(0.225 0.068 151);
-  --glid-green-light: oklch(0.920 0.042 151);
+  --glid-cream: oklch(0.940 0.028 80);
+  --glid-green: oklch(0.555 0.160 151);
+  --glid-green-dark: oklch(0.200 0.080 151);
+  --glid-green-light: oklch(0.925 0.050 151);
 
   /* ── Figma Design Tokens: Primary ── */
-  --primary-000: #f4fcf7;
-  --primary-100: #cdf1d9;
-  --primary-200: #a9dbbe;
-  --primary-300: #86c6a3;
-  --primary-400: #62b088;
-  --primary-500: #3f9b6e;   /* CTA */
-  --primary-600: #107f4a;   /* Brand logo */
-  --primary-700: #0d6d40;
-  --primary-800: #095b35;
-  --primary-900: #064a2b;
-  --primary-1000: #023820;
+  --primary-000: #eefcf3;
+  --primary-100: #c2f0d3;
+  --primary-200: #98e0b6;
+  --primary-300: #6ecf99;
+  --primary-400: #4abe7d;
+  --primary-500: #2da862;   /* CTA — more vivid */
+  --primary-600: #0f8a4d;   /* Brand logo */
+  --primary-700: #0c7542;
+  --primary-800: #096137;
+  --primary-900: #064e2c;
+  --primary-1000: #023b21;
 
   /* ── Figma Design Tokens: Neutral ── */
   --neutral-white: #ffffff;
@@ -126,24 +126,26 @@
   --support-warning-100: #ffecce;
 
   /* shadcn tokens — white-based with Glid green accents */
-  --background: oklch(0.990 0.003 80);      /* near-white warm */
-  --foreground: oklch(0.185 0.045 151);
+
+
+  --background: oklch(0.988 0.004 80);      /* near-white warm */
+  --foreground: oklch(0.160 0.050 151);      /* darker for contrast */
   --card: oklch(1 0 0);                     /* pure white cards */
-  --card-foreground: oklch(0.185 0.045 151);
+  --card-foreground: oklch(0.160 0.050 151);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.185 0.045 151);
-  --primary: oklch(0.548 0.128 151);
+  --popover-foreground: oklch(0.160 0.050 151);
+  --primary: oklch(0.555 0.160 151);         /* more vivid green */
   --primary-foreground: oklch(0.985 0.005 80);
-  --secondary: oklch(0.920 0.042 151);
-  --secondary-foreground: oklch(0.225 0.068 151);
-  --muted: oklch(0.950 0.008 80);
-  --muted-foreground: oklch(0.480 0.045 151);
-  --accent: oklch(0.940 0.030 151);
-  --accent-foreground: oklch(0.225 0.068 151);
+  --secondary: oklch(0.925 0.050 151);
+  --secondary-foreground: oklch(0.200 0.080 151);
+  --muted: oklch(0.955 0.010 80);
+  --muted-foreground: oklch(0.420 0.040 151); /* darker for readability */
+  --accent: oklch(0.940 0.040 151);           /* more saturated */
+  --accent-foreground: oklch(0.200 0.080 151);
   --destructive: oklch(0.58 0.22 27);
-  --border: oklch(0.900 0.015 151);
-  --input: oklch(0.940 0.010 80);
-  --ring: oklch(0.548 0.128 151);
+  --border: oklch(0.900 0.020 151);
+  --input: oklch(0.940 0.012 80);
+  --ring: oklch(0.555 0.160 151);
   --radius: 0.875rem;
   --sidebar: oklch(0.225 0.068 151);
   --sidebar-foreground: oklch(0.930 0.024 80);
@@ -157,23 +159,23 @@
 
 .dark {
   --background: oklch(0.145 0.03 151);
-  --foreground: oklch(0.930 0.024 80);
+  --foreground: oklch(0.940 0.028 80);
   --card: oklch(0.185 0.045 151);
-  --card-foreground: oklch(0.930 0.024 80);
+  --card-foreground: oklch(0.940 0.028 80);
   --popover: oklch(0.185 0.045 151);
-  --popover-foreground: oklch(0.930 0.024 80);
-  --primary: oklch(0.600 0.128 151);
+  --popover-foreground: oklch(0.940 0.028 80);
+  --primary: oklch(0.610 0.155 151);
   --primary-foreground: oklch(0.145 0.03 151);
   --secondary: oklch(0.250 0.06 151);
-  --secondary-foreground: oklch(0.930 0.024 80);
+  --secondary-foreground: oklch(0.940 0.028 80);
   --muted: oklch(0.250 0.06 151);
-  --muted-foreground: oklch(0.650 0.06 151);
-  --accent: oklch(0.280 0.075 151);
-  --accent-foreground: oklch(0.930 0.024 80);
+  --muted-foreground: oklch(0.680 0.065 151);
+  --accent: oklch(0.280 0.085 151);
+  --accent-foreground: oklch(0.940 0.028 80);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.600 0.128 151);
+  --ring: oklch(0.610 0.155 151);
   --sidebar: oklch(0.145 0.03 151);
   --sidebar-foreground: oklch(0.930 0.024 80);
   --sidebar-primary: oklch(0.600 0.128 151);
@@ -190,9 +192,21 @@
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   html {
     @apply font-sans;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+  p {
+    line-height: 1.7;
   }
 }
 

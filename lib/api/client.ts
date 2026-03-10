@@ -91,7 +91,10 @@ apiClient.interceptors.response.use(
       clearTokens()
       refreshQueue = []
       if (typeof window !== 'undefined') {
-        window.location.href = '/auth/login'
+        const isCabinet = window.location.pathname.startsWith('/cabinet')
+        if (isCabinet) {
+          window.location.href = '/auth/login'
+        }
       }
       return Promise.reject(error)
     } finally {

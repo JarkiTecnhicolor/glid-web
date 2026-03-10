@@ -9,10 +9,10 @@ export const catalogsApi = {
 
   getSpecialitiesForClinic: (facilityId?: string) =>
     apiClient
-      .get<Speciality[]>('/catalogs/specialities-clinic', {
+      .get<{ uk: Speciality[] } | Speciality[]>('/catalogs/specialities-clinic', {
         params: facilityId ? { facilityId } : undefined,
       })
-      .then((r) => r.data),
+      .then((r) => (Array.isArray(r.data) ? r.data : r.data.uk)),
 
   getSpecialtyAssistances: (specialityId: string) =>
     apiClient
