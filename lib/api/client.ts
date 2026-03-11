@@ -1,6 +1,10 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+const DIRECT_API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://mobile-kszi.health-cub.com/api'
+
+// In the browser, use the Next.js rewrite proxy to avoid CORS issues.
+// On the server (SSR), call the API directly.
+const BASE_URL = typeof window !== 'undefined' ? '/api/proxy' : DIRECT_API_URL
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -73,7 +77,8 @@ apiClient.interceptors.response.use(
       const refreshToken = getRefreshToken()
       if (!refreshToken) throw new Error('No refresh token')
 
-      const { data } = await axios.post(`${BASE_URL}/user/refresh-token`, {
+      const refreshUrl = typeof window !== 'undefined' ? '/api/proxy/user/refresh-token' : `${DIRECT_API_URL}/user/refresh-token`
+      const { data } = await axios.post(refreshUrl, {
         token: refreshToken,
       }, {
         headers: {
