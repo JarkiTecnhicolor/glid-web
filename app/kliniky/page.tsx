@@ -27,8 +27,7 @@ function KlinikyContent() {
     queryFn: () => clinicsApi.getNetworkLabs({ size: 20 }),
   })
 
-  const allFacilities: Facility[] = Array.isArray(data) ? data : data?.data ?? []
-  const facilities = allFacilities
+  const facilities: Facility[] = data ?? []
   const total = facilities.length
 
   function handleSearch(e: React.FormEvent) {
