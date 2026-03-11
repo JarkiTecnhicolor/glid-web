@@ -23,28 +23,38 @@ export default function FacilityProfilePage() {
 
   const { data: facility, isLoading } = useQuery({
     queryKey: ['facility', id],
-    queryFn: () => clinicsApi.getLabAdvancedData(id),
+    queryFn: () => clinicsApi.getLabAdvancedData({ facilityId: id, from: '', to: '', assistanceIds: '' }),
   })
 
   const { data: assistances } = useQuery({
     queryKey: ['lab-assistances', id],
-    queryFn: () => catalogsApi.getLabAssistances(id),
+    queryFn: () => catalogsApi.getLabAssistances(),
   })
+
+  type SlotItem = { date?: string; time?: string; id?: string; available?: boolean }
 
   const { data: slots } = useQuery({
     queryKey: ['lab-slots', id, selectedDate],
-    queryFn: () => clinicsApi.getLabFreeTimeslots(id, selectedDate ?? undefined),
+    queryFn: () => clinicsApi.getLabFreeTimeslots({
+      facilityId: id,
+      from: selectedDate ?? '',
+      to: selectedDate ?? '',
+      assistanceIds: selectedAssistances.join(','),
+    }),
     enabled: !!selectedDate,
   })
+
+  const slotItems: SlotItem[] = (slots as SlotItem[] | undefined) ?? []
 
   const createAppointment = useMutation({
     mutationFn: () =>
       appointmentsApi.createLabAppointment({
         facilityId: id,
         date: selectedDate ?? '',
-        time: slots?.find((s) => s.id === selectedSlot)?.time ?? '',
-        slotId: selectedSlot ?? '',
-        assistanceIds: selectedAssistances,
+        time: slotItems.find((s) => s.id === selectedSlot)?.time ?? '',
+        assistances: selectedAssistances.map(Number),
+        state: 'NEED_CONFIRMATION',
+        paymentData: { type: 'CASH' },
       }),
     onSuccess: () => setBookingStep('success'),
   })
@@ -75,8 +85,8 @@ export default function FacilityProfilePage() {
     )
   }
 
-  const availableSlots = slots?.filter((s) => s.available) ?? []
-  const selectedSlotTime = slots?.find((s) => s.id === selectedSlot)?.time
+  const availableSlots = slotItems.filter((s) => s.available)
+  const selectedSlotTime = slotItems.find((s) => s.id === selectedSlot)?.time
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-8 max-w-4xl space-y-6">
@@ -262,7 +272,7 @@ export default function FacilityProfilePage() {
                       {availableSlots.map((slot) => (
                         <button
                           key={slot.id}
-                          onClick={() => setSelectedSlot(slot.id)}
+                          onClick={() => setSelectedSlot(slot.id ?? null)}
                           className={cn(
                             'py-2 rounded-lg border text-sm font-medium transition-colors',
                             selectedSlot === slot.id

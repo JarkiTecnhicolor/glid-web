@@ -5,35 +5,35 @@ import type {
   DoctorAdditionalInfo,
   DoctorReview,
   DoctorReviewsDistribution,
-  DoctorSchedule,
   DoctorAssistance,
-  TimeSlot,
+  DoctorsFreeFilter,
+  DoctorFacilitiesFilter,
+  DoctorFreeTimeslotsFilter,
+  DoctorAdvancedDataFilter,
+  CreateDoctorReviewRequest,
   PaginatedResponse,
 } from '@/types/api'
 
-export interface DoctorsFilter {
-  search?: string
-  specialityId?: string
-  assistanceId?: string
-  facilityId?: string
-  isOnline?: boolean
-  page?: number
-  limit?: number
-}
-
 export const doctorsApi = {
-  getDoctors: (params?: DoctorsFilter) =>
+  /** Search free doctors with geo, dates, sorting, category */
+  getDoctorsFree: (params: DoctorsFreeFilter) =>
     apiClient
-      .get<PaginatedResponse<Doctor>>('/facility-entities/doctors', { params })
+      .get<PaginatedResponse<Doctor>>('/facility-entities/v2/doctors-free', { params })
       .then((r) => r.data),
 
-  getDoctorAdvancedData: (doctorId: string) =>
+  /** Get doctor facilities (clinics where the doctor works) */
+  getDoctorFacilities: (params: DoctorFacilitiesFilter) =>
     apiClient
-      .get<DoctorAdvancedData>('/facility-entities/doctor-advanced-data', {
-        params: { doctorId },
-      })
+      .get('/facility-entities/doctor-facilities', { params })
       .then((r) => r.data),
 
+  /** Get doctor advanced data (with timeslots context) */
+  getDoctorAdvancedData: (params: DoctorAdvancedDataFilter) =>
+    apiClient
+      .get<DoctorAdvancedData>('/facility-entities/doctor-advanced-data', { params })
+      .then((r) => r.data),
+
+  /** Get doctor additional info (certificates, awards) */
   getDoctorAdditionalInfo: (doctorId: string) =>
     apiClient
       .get<DoctorAdditionalInfo>('/facility-entities/doctor-additional-info', {
@@ -41,18 +41,35 @@ export const doctorsApi = {
       })
       .then((r) => r.data),
 
-  getDoctorReviews: (doctorId: string, params?: { page?: number; limit?: number }) =>
+  /** Get doctor free timeslots for a date range */
+  getDoctorFreeTimeslots: (params: DoctorFreeTimeslotsFilter) =>
+    apiClient
+      .get('/facility-entities/doctor-free-timeslots', { params })
+      .then((r) => r.data),
+
+  /** Get doctor assistances (services the doctor provides) */
+  getDoctorAssistances: (doctorId: string) =>
+    apiClient
+      .get<DoctorAssistance[]>('/facility-entities/doctor-assistances', {
+        params: { doctorId },
+      })
+      .then((r) => r.data),
+
+  /** Get doctor reviews list */
+  getDoctorReviews: (doctorId: string, params?: { page?: number; size?: number }) =>
     apiClient
       .get<PaginatedResponse<DoctorReview>>('/facility-entities/doctor-reviews', {
         params: { doctorId, ...params },
       })
       .then((r) => r.data),
 
-  createDoctorReview: (doctorId: string, data: { rating: number; text: string }) =>
+  /** Create a doctor review */
+  createDoctorReview: (data: CreateDoctorReviewRequest) =>
     apiClient
-      .post<DoctorReview>('/facility-entities/doctor-reviews', { doctorId, ...data })
+      .post<DoctorReview>('/facility-entities/doctor-reviews', data)
       .then((r) => r.data),
 
+  /** Get doctor reviews distribution (rating breakdown) */
   getDoctorReviewsDistribution: (doctorId: string) =>
     apiClient
       .get<DoctorReviewsDistribution>(
@@ -61,29 +78,27 @@ export const doctorsApi = {
       )
       .then((r) => r.data),
 
-  getDoctorSchedules: (doctorId: string) =>
-    apiClient
-      .get<DoctorSchedule>('/facility-entities/doctor-schedules', {
-        params: { doctorId },
+  /** Upload doctor avatar (admin) */
+  uploadDoctorAvatar: (facilityId: string, doctorId: string, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiClient
+      .post('/attachments/doctor-avatar', formData, {
+        params: { facilityId, doctorId },
+        headers: { 'Content-Type': 'multipart/form-data' },
       })
+      .then((r) => r.data)
+  },
+
+  /** Set/unset doctor as favorite */
+  setDoctorFavorite: (doctorId: string, isFavorite: boolean) =>
+    apiClient
+      .post('/facility-entities/user-favorite-doctors', { doctorId, isFavorite })
       .then((r) => r.data),
 
-  getDoctorFreeTimeslots: (doctorId: string, date?: string) =>
+  /** Get favorite doctors list */
+  getFavoriteDoctors: () =>
     apiClient
-      .get<TimeSlot[]>('/facility-entities/doctor-free-timeslots', {
-        params: { doctorId, date },
-      })
-      .then((r) => r.data),
-
-  getDoctorsAssistances: (doctorId: string) =>
-    apiClient
-      .get<DoctorAssistance[]>('/facility-entities/doctors-assistances', {
-        params: { doctorId },
-      })
-      .then((r) => r.data),
-
-  getDoctorFacilities: (doctorId: string) =>
-    apiClient
-      .get('/facility-entities/doctor-facilities', { params: { doctorId } })
+      .get<Doctor[]>('/facility-entities/user-favorite-doctors')
       .then((r) => r.data),
 }

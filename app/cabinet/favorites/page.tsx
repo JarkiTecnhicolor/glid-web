@@ -16,7 +16,7 @@ export default function FavoritesPage() {
   })
 
   const toggle = useMutation({
-    mutationFn: (doctorId: string) => favoritesApi.toggleFavoriteDoctor(doctorId),
+    mutationFn: (doctorId: string) => favoritesApi.setFavoriteDoctor(doctorId, false),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['favorite-doctors'] }),
   })
 

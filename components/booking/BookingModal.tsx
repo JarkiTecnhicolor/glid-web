@@ -16,40 +16,41 @@ interface Props {
   onClose: () => void
 }
 
+type SlotItem = { date?: string; time?: string; id?: string; available?: boolean }
+
 export function BookingModal({ doctorId, doctorName, open, onClose }: Props) {
   const router = useRouter()
   const { isAuthenticated } = useAuthStore()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
-  const [selectedFacilityId, setSelectedFacilityId] = useState<string | null>(null)
   const [step, setStep] = useState<'slot' | 'confirm' | 'success'>('slot')
 
-  const { data: schedule } = useQuery({
-    queryKey: ['doctor-schedule', doctorId],
-    queryFn: () => doctorsApi.getDoctorSchedules(doctorId),
+  // Generate date range: today + 7 days
+  const today = new Date()
+  const fromDate = today.toISOString().split('T')[0]
+  const toDate = new Date(today.getTime() + 7 * 86400000).toISOString().split('T')[0]
+
+  const { data: timeslots } = useQuery({
+    queryKey: ['doctor-timeslots-booking', doctorId, fromDate, toDate],
+    queryFn: () => doctorsApi.getDoctorFreeTimeslots({ doctorId, from: fromDate, to: toDate }),
     enabled: open,
   })
 
-  const { data: slots } = useQuery({
-    queryKey: ['doctor-slots', doctorId, selectedDate],
-    queryFn: () => doctorsApi.getDoctorFreeTimeslots(doctorId, selectedDate ?? undefined),
-    enabled: !!selectedDate && open,
-  })
-
-  const { data: facilities } = useQuery({
-    queryKey: ['doctor-facilities', doctorId],
-    queryFn: () => doctorsApi.getDoctorFacilities(doctorId),
-    enabled: open,
-  })
+  // Group timeslots by date
+  const allSlots: SlotItem[] = (timeslots as SlotItem[] | undefined) ?? []
+  const dateSet = [...new Set(allSlots.map((s) => s.date).filter(Boolean))] as string[]
+  const slotsForDate = selectedDate ? allSlots.filter((s) => s.date === selectedDate) : []
+  const selectedSlotTime = slotsForDate.find((s) => s.id === selectedSlot)?.time
 
   const createAppointment = useMutation({
     mutationFn: () =>
       appointmentsApi.createClinicAppointment({
         doctorId,
-        facilityId: selectedFacilityId ?? '',
         date: selectedDate ?? '',
-        time: slots?.find((s) => s.id === selectedSlot)?.time ?? '',
-        slotId: selectedSlot ?? '',
+        time: selectedSlotTime ?? '',
+        state: 'NEED_CONFIRMATION',
+        assistanceId: '',
+        paymentData: { type: 'CASH' },
       }),
     onSuccess: () => {
       setStep('success')
@@ -76,10 +77,6 @@ export function BookingModal({ doctorId, doctorName, open, onClose }: Props) {
   }
 
   if (!open) return null
-
-  const workDays = schedule?.workDays ?? []
-  const availableSlots = slots?.filter((s) => s.available) ?? []
-  const selectedSlotTime = slots?.find((s) => s.id === selectedSlot)?.time
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4">
@@ -158,22 +155,22 @@ export function BookingModal({ doctorId, doctorName, open, onClose }: Props) {
               {/* Date picker */}
               <div>
                 <p className="text-sm font-medium text-foreground mb-3">Оберіть дату</p>
-                {workDays.length === 0 ? (
+                {dateSet.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Завантаження розкладу…</p>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {workDays.map((day) => (
+                    {dateSet.map((date) => (
                       <button
-                        key={day.date}
-                        onClick={() => { setSelectedDate(day.date); setSelectedSlot(null) }}
+                        key={date}
+                        onClick={() => { setSelectedDate(date); setSelectedSlot(null) }}
                         className={cn(
                           'px-3 py-2 rounded-xl text-sm font-medium border transition-colors',
-                          selectedDate === day.date
+                          selectedDate === date
                             ? 'bg-primary text-primary-foreground border-primary'
                             : 'bg-background border-border text-foreground hover:border-primary'
                         )}
                       >
-                        {new Date(day.date).toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'short' })}
+                        {new Date(date).toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'short' })}
                       </button>
                     ))}
                   </div>
@@ -184,14 +181,14 @@ export function BookingModal({ doctorId, doctorName, open, onClose }: Props) {
               {selectedDate && (
                 <div>
                   <p className="text-sm font-medium text-foreground mb-3">Оберіть час</p>
-                  {availableSlots.length === 0 ? (
+                  {slotsForDate.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Немає вільних слотів</p>
                   ) : (
                     <div className="grid grid-cols-4 gap-2">
-                      {availableSlots.map((slot) => (
+                      {slotsForDate.map((slot) => (
                         <button
                           key={slot.id}
-                          onClick={() => setSelectedSlot(slot.id)}
+                          onClick={() => setSelectedSlot(slot.id ?? null)}
                           className={cn(
                             'py-2 rounded-lg border text-sm font-medium transition-colors',
                             selectedSlot === slot.id

@@ -105,8 +105,8 @@ export default function RegisterPage() {
       setTokens(res.accessToken, res.refreshToken)
       document.cookie = `glid_access_token=${res.accessToken}; path=/; max-age=3600`
       try {
-        const account = await authApi.getAccount()
-        setUser(account)
+        const profile = await authApi.getProfileFull()
+        setUser(profile as Parameters<typeof setUser>[0])
       } catch {
         // non-blocking
       }

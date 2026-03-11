@@ -7,9 +7,9 @@ export const favoritesApi = {
       .get<Doctor[]>('/facility-entities/user-favorite-doctors')
       .then((r) => r.data),
 
-  toggleFavoriteDoctor: (doctorId: string) =>
+  setFavoriteDoctor: (doctorId: string, isFavorite: boolean) =>
     apiClient
-      .post('/facility-entities/user-favorite-doctors', { doctorId })
+      .post('/facility-entities/user-favorite-doctors', { doctorId, isFavorite })
       .then((r) => r.data),
 
   getFavoriteAssistances: () =>
@@ -17,8 +17,8 @@ export const favoritesApi = {
       .get<DoctorAssistance[]>('/facility-entities/user-favorite-assistances')
       .then((r) => r.data),
 
-  toggleFavoriteAssistance: (assistanceId: string) =>
+  setFavoriteAssistance: (assistanceId: string, isFavorite: boolean) =>
     apiClient
-      .post('/facility-entities/user-favorite-assistances', { assistanceId })
+      .post('/facility-entities/user-favorite-assistances', { assistanceId, isFavorite })
       .then((r) => r.data),
 }

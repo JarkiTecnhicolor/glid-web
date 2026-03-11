@@ -31,7 +31,7 @@ function DoctorsContent() {
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['doctors', { search, specialityId, isOnline }],
-    queryFn: () => doctorsApi.getDoctors({ search, specialityId, isOnline, limit: 20 }),
+    queryFn: () => doctorsApi.getDoctorsFree({ lastName: search, specialtyId: specialityId, category: isOnline ? 'ONLINE' : undefined, size: 20, page: 0 }),
     retry: false,
   })
 

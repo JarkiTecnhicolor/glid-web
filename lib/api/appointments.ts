@@ -4,57 +4,76 @@ import type {
   AppointmentDiagnosis,
   AppointmentAttachment,
   CreateClinicAppointmentRequest,
+  CreateOnlineAppointmentRequest,
   CreateLabAppointmentRequest,
-  PaginatedResponse,
+  EditAppointmentRequest,
+  UserAppointmentsFilter,
 } from '@/types/api'
 
 export const appointmentsApi = {
-  getUserAppointments: (params?: { status?: string; page?: number; limit?: number }) =>
+  /** Get user appointments list with filters */
+  getUserAppointments: (params?: UserAppointmentsFilter) =>
     apiClient
-      .get<PaginatedResponse<Appointment>>('/facility-entities/user-appointments', {
-        params,
-      })
+      .get('/facility-entities/user-appointments', { params })
       .then((r) => r.data),
 
-  updateUserAppointment: (appointmentId: string, data: Partial<Appointment>) =>
+  /** Get single appointment by ID */
+  getUserAppointment: (appointmentId: string) =>
     apiClient
-      .put<Appointment>('/facility-entities/user-appointments', {
-        appointmentId,
-        ...data,
-      })
+      .get<Appointment>(`/facility-entities/user-appointments/${appointmentId}`)
       .then((r) => r.data),
 
-  cancelUserAppointment: (appointmentId: string) =>
+  /** Edit user appointment */
+  updateUserAppointment: (appointmentId: string, data: EditAppointmentRequest) =>
     apiClient
-      .delete('/facility-entities/user-appointments', {
-        params: { appointmentId },
-      })
+      .put<Appointment>(`/facility-entities/user-appointments/${appointmentId}`, data)
       .then((r) => r.data),
 
+  /** Create clinic appointment */
   createClinicAppointment: (data: CreateClinicAppointmentRequest) =>
     apiClient
       .post<Appointment>('/facility-entities/create-clinic-appointment', data)
       .then((r) => r.data),
 
+  /** Create online appointment */
+  createOnlineAppointment: (data: CreateOnlineAppointmentRequest) =>
+    apiClient
+      .post<Appointment>('/facility-entities/create-clinic-appointment', data)
+      .then((r) => r.data),
+
+  /** Create lab appointment */
   createLabAppointment: (data: CreateLabAppointmentRequest) =>
     apiClient
       .post<Appointment>('/facility-entities/create-lab-appointment', data)
       .then((r) => r.data),
 
-  getAppointmentDiagnoses: (appointmentId: string) =>
+  /** Stage appointment (confirm/reject) */
+  stageAppointment: (appointmentId: string, stage: 'confirm' | 'reject') =>
     apiClient
-      .get<AppointmentDiagnosis[]>('/facility-entities/appointment-diagnoses', {
-        params: { appointmentId },
+      .post(`/facility-entities/stage-appointment/${appointmentId}`, { stage })
+      .then((r) => r.data),
+
+  /** Get suitable facilities for an appointment by city */
+  getSuitableFacilities: (appointmentId: string, cityId?: string) =>
+    apiClient
+      .get(`/facility-entities/appointment-suitable-facilities/${appointmentId}`, {
+        params: cityId ? { cityId } : undefined,
       })
       .then((r) => r.data),
 
-  getAppointmentAttachments: (appointmentId: string) =>
+  /** Get appointment diagnoses */
+  getAppointmentDiagnoses: () =>
     apiClient
-      .get<AppointmentAttachment[]>('/facility-entities/appointment-attachments', {
-        params: { appointmentId },
-      })
+      .get<AppointmentDiagnosis[]>('/facility-entities/appointment-diagnoses')
       .then((r) => r.data),
 
+  /** Get appointment attachments list */
+  getAppointmentAttachments: () =>
+    apiClient
+      .get<AppointmentAttachment[]>('/facility-entities/appointment-attachments')
+      .then((r) => r.data),
+
+  /** Get appointment attachment download link */
   getAttachmentDownloadLink: (attachmentId: string) =>
     apiClient
       .get<{ url: string }>('/facility-entities/appointment-attachment-link', {
@@ -62,10 +81,29 @@ export const appointmentsApi = {
       })
       .then((r) => r.data),
 
-  deleteAppointmentAttachment: (attachmentId: string) =>
+  /** Get appointment content (medcard) */
+  getAppointmentContent: (params?: { page?: number; size?: number }) =>
     apiClient
-      .delete('/facility-entities/appointment-attachments', {
-        params: { attachmentId },
-      })
+      .get('/facility-entities/appointment-content', { params })
       .then((r) => r.data),
+
+  // ─── Dobrodoc ──────────────────────────────────────────────────────────────
+
+  /** Get Dobrodoc appointment and user data */
+  getDobrodocAppointmentUserData: (appointmentId: string) =>
+    apiClient
+      .get('/dobrodoc/appointment-user-data', { params: { appointmentId } })
+      .then((r) => r.data),
+
+  /** Upload file to Dobrodoc appointment chat */
+  uploadDobrodocChatFile: (appointmentId: string, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiClient
+      .post('/dobrodoc/appointment-chat-file', formData, {
+        params: { appointmentId },
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
 }

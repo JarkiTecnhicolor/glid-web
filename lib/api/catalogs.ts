@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { Speciality, Assistance } from '@/types/api'
+import type { Speciality, Assistance, DoctorCategory } from '@/types/api'
 
 export const catalogsApi = {
   getSpecialities: () =>
@@ -7,17 +7,17 @@ export const catalogsApi = {
       .get<Speciality[]>('/catalogs/specialities')
       .then((r) => r.data),
 
-  getSpecialitiesForClinic: (facilityId?: string) =>
+  getSpecialitiesForClinic: (category?: DoctorCategory) =>
     apiClient
       .get<{ uk: Speciality[] } | Speciality[]>('/catalogs/specialities-clinic', {
-        params: facilityId ? { facilityId } : undefined,
+        params: category ? { category } : undefined,
       })
       .then((r) => (Array.isArray(r.data) ? r.data : r.data.uk)),
 
-  getSpecialtyAssistances: (specialityId: string) =>
+  getSpecialtyAssistances: (specialtyId: string) =>
     apiClient
       .get<Assistance[]>('/catalogs/specialty-assistances', {
-        params: { specialityId },
+        params: { specialtyId },
       })
       .then((r) => r.data),
 
@@ -26,11 +26,9 @@ export const catalogsApi = {
       .get<Assistance[]>('/catalogs/assistances')
       .then((r) => r.data),
 
-  getLabAssistances: (facilityId?: string) =>
+  getLabAssistances: () =>
     apiClient
-      .get<Assistance[]>('/catalogs/assistances-lab', {
-        params: facilityId ? { facilityId } : undefined,
-      })
+      .get<Assistance[]>('/catalogs/assistances-lab')
       .then((r) => r.data),
 
   getAssistanceInfo: (assistanceId: string) =>

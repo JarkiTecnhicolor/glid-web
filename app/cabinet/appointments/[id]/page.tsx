@@ -21,28 +21,25 @@ export default function AppointmentDetailPage() {
   const queryClient = useQueryClient()
   const [cancelConfirm, setCancelConfirm] = useState(false)
 
-  // We fetch the appointments list and find the one by id
-  const { data: allAppointments, isLoading } = useQuery({
-    queryKey: ['appointments', {}],
-    queryFn: () => appointmentsApi.getUserAppointments({ limit: 100 }),
+  const { data: appointment, isLoading } = useQuery({
+    queryKey: ['appointment', id],
+    queryFn: () => appointmentsApi.getUserAppointment(id),
   })
-
-  const appointment = allAppointments?.data.find((a) => a.id === id)
 
   const { data: diagnoses } = useQuery({
     queryKey: ['diagnoses', id],
-    queryFn: () => appointmentsApi.getAppointmentDiagnoses(id),
+    queryFn: () => appointmentsApi.getAppointmentDiagnoses(),
     enabled: !!appointment && appointment.status === 'completed',
   })
 
   const { data: attachments } = useQuery({
     queryKey: ['attachments', id],
-    queryFn: () => appointmentsApi.getAppointmentAttachments(id),
+    queryFn: () => appointmentsApi.getAppointmentAttachments(),
     enabled: !!appointment && appointment.status === 'completed',
   })
 
   const cancelMutation = useMutation({
-    mutationFn: () => appointmentsApi.cancelUserAppointment(id),
+    mutationFn: () => appointmentsApi.stageAppointment(id, 'reject'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       router.push('/cabinet/appointments')
@@ -77,7 +74,7 @@ export default function AppointmentDetailPage() {
     )
   }
 
-  const status = STATUS_CONFIG[appointment.status] ?? STATUS_CONFIG.pending
+  const status = (appointment.status ? STATUS_CONFIG[appointment.status] : undefined) ?? STATUS_CONFIG.pending
   const dateStr = new Date(appointment.date).toLocaleDateString('uk-UA', {
     weekday: 'long',
     day: 'numeric',

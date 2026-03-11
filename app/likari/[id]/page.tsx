@@ -17,7 +17,7 @@ export default function DoctorProfilePage() {
 
   const { data: doctor, isLoading } = useQuery({
     queryKey: ['doctor', id],
-    queryFn: () => doctorsApi.getDoctorAdvancedData(id),
+    queryFn: () => doctorsApi.getDoctorAdvancedData({ doctorId: id }),
   })
 
   const { data: reviews } = useQuery({
@@ -28,7 +28,7 @@ export default function DoctorProfilePage() {
 
   const { data: assistances } = useQuery({
     queryKey: ['doctor-assistances', id],
-    queryFn: () => doctorsApi.getDoctorsAssistances(id),
+    queryFn: () => doctorsApi.getDoctorAssistances(id),
     enabled: activeTab === 'services',
   })
 
@@ -254,24 +254,29 @@ export default function DoctorProfilePage() {
 function ScheduleTab({ doctorId, onBook }: { doctorId: string; onBook: () => void }) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
-  const { data: schedule, isLoading } = useQuery({
-    queryKey: ['doctor-schedule', doctorId],
-    queryFn: () => doctorsApi.getDoctorSchedules(doctorId),
+  // Generate date range: today + 7 days
+  const today = new Date()
+  const fromDate = today.toISOString().split('T')[0]
+  const toDate = new Date(today.getTime() + 7 * 86400000).toISOString().split('T')[0]
+
+  const { data: timeslots, isLoading } = useQuery({
+    queryKey: ['doctor-timeslots', doctorId, fromDate, toDate],
+    queryFn: () => doctorsApi.getDoctorFreeTimeslots({ doctorId, from: fromDate, to: toDate }),
   })
 
-  const { data: slots } = useQuery({
-    queryKey: ['doctor-slots', doctorId, selectedDate],
-    queryFn: () => doctorsApi.getDoctorFreeTimeslots(doctorId, selectedDate ?? undefined),
-    enabled: !!selectedDate,
-  })
+  // Group timeslots by date for day selection
+  const timeslotData = (timeslots as { date?: string; time?: string; id?: string; available?: boolean }[] | undefined) ?? []
+  const dateSet = [...new Set(timeslotData.map((s: { date?: string }) => s.date).filter(Boolean))]
 
-  const workDays = schedule?.workDays ?? []
+  const slotsForDate = selectedDate
+    ? timeslotData.filter((s: { date?: string }) => s.date === selectedDate)
+    : []
 
   return (
     <div className="space-y-6">
       {isLoading ? (
         <div className="h-24 bg-card border border-border rounded-2xl animate-pulse" />
-      ) : workDays.length === 0 ? (
+      ) : dateSet.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-4xl mb-3">📅</p>
           <p>Доступних записів немає</p>
@@ -281,42 +286,42 @@ function ScheduleTab({ doctorId, onBook }: { doctorId: string; onBook: () => voi
           <div>
             <p className="text-sm font-medium text-foreground mb-3">Оберіть дату</p>
             <div className="flex flex-wrap gap-2">
-              {workDays.map((day) => (
+              {dateSet.map((date) => (
                 <button
-                  key={day.date}
-                  onClick={() => setSelectedDate(day.date)}
+                  key={date}
+                  onClick={() => setSelectedDate(date as string)}
                   className={cn(
                     'px-4 py-2 rounded-xl text-sm font-medium border transition-colors',
-                    selectedDate === day.date
+                    selectedDate === date
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-card border-border text-foreground hover:border-primary'
                   )}
                 >
-                  {new Date(day.date).toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  {new Date(date as string).toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'short' })}
                 </button>
               ))}
             </div>
           </div>
 
-          {selectedDate && slots && (
+          {selectedDate && slotsForDate.length > 0 && (
             <div>
               <p className="text-sm font-medium text-foreground mb-3">Вільні слоти</p>
-              {slots.filter((s) => s.available).length === 0 ? (
-                <p className="text-sm text-muted-foreground">Немає вільних слотів на цю дату</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {slots.filter((s) => s.available).map((slot) => (
-                    <button
-                      key={slot.id}
-                      onClick={onBook}
-                      className="px-3 py-2 rounded-lg border border-border bg-card text-sm font-medium hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
-                    >
-                      {slot.time}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {slotsForDate.map((slot: { id?: string; time?: string }) => (
+                  <button
+                    key={slot.id}
+                    onClick={onBook}
+                    className="px-3 py-2 rounded-lg border border-border bg-card text-sm font-medium hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                  >
+                    {slot.time}
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
+
+          {selectedDate && slotsForDate.length === 0 && (
+            <p className="text-sm text-muted-foreground">Немає вільних слотів на цю дату</p>
           )}
         </>
       )}

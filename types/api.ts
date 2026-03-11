@@ -8,7 +8,17 @@ export interface SignInRequest {
 export interface SignInResponse {
   accessToken: string
   refreshToken: string
-  user: User
+  user?: User
+}
+
+export interface RegisterOtpInitialRequest {
+  phone: string
+}
+
+export interface RegisterOtpConfirmRequest {
+  phone: string
+  confirmationCode: string
+  channelId: string
 }
 
 export interface RegisterPhoneStep1Request {
@@ -40,6 +50,26 @@ export interface User {
   lang?: string
 }
 
+export interface UserProfileFull {
+  firstName: string
+  lastName: string
+  middleName?: string
+  email?: string
+  phone: string
+  dateBirth?: string
+  medicalNotes?: string
+  allergicNotes?: string
+  treatment?: string
+  bloodType?: string
+  age?: number
+  height?: string
+  weight?: string
+  lang?: string
+  cityId?: number
+  isVerified?: boolean
+  gender?: { code: 'MALE' | 'FEMALE' }
+}
+
 // ─── Doctor ───────────────────────────────────────────────────────────────────
 
 export interface Doctor {
@@ -57,6 +87,38 @@ export interface Doctor {
   facilityId?: string
   facilityName?: string
   isOnline?: boolean
+  distance?: number
+  category?: DoctorCategory
+}
+
+export type DoctorCategory = 'CLINIC' | 'DENT' | 'ONLINE'
+
+export type DoctorSort = 'RATING' | 'CHEAP' | 'EXPENSIVE' | 'DISTANCE'
+
+export interface DoctorsFreeFilter {
+  specialtyId?: string
+  assistanceId?: string
+  facilityIds?: string
+  cityId?: string
+  searchDistance?: number
+  currentCoords?: string
+  from?: string
+  to?: string
+  lastName?: string
+  isChildren?: boolean
+  sort?: DoctorSort
+  category?: DoctorCategory
+  page?: number
+  size?: number
+}
+
+export interface DoctorFacilitiesFilter {
+  specialtyId?: string
+  assistanceId?: string
+  searchDistance?: number
+  currentCoords?: string
+  page?: number
+  size?: number
 }
 
 export interface DoctorAdvancedData extends Doctor {
@@ -79,8 +141,18 @@ export interface DoctorReview {
   userId: string
   userName: string
   rating: number
-  text: string
+  text?: string
+  message?: string
+  anonymously?: boolean
   createdAt: string
+}
+
+export interface CreateDoctorReviewRequest {
+  doctorId: string
+  rating: number
+  anonymously?: boolean
+  message?: string
+  appointmentId?: number
 }
 
 export interface DoctorReviewsDistribution {
@@ -106,6 +178,22 @@ export interface TimeSlot {
   available: boolean
 }
 
+export interface DoctorFreeTimeslotsFilter {
+  doctorId: string
+  from: string
+  to: string
+  assistanceId?: string
+  spesialityId?: string
+}
+
+export interface DoctorAdvancedDataFilter {
+  doctorId: string
+  assistanceId?: string
+  specialtyId?: string
+  from?: string
+  to?: string
+}
+
 export interface DoctorAssistance {
   id: string
   name: string
@@ -118,11 +206,13 @@ export interface DoctorAssistance {
 export interface Facility {
   id: string
   name: string
-  type: 'clinic' | 'lab' | 'hospital'
+  type?: 'clinic' | 'lab' | 'hospital'
   logo?: string
   address?: string
   phone?: string
   rating?: number
+  distance?: number
+  coords?: string
 }
 
 export interface LabAdvancedData extends Facility {
@@ -131,20 +221,99 @@ export interface LabAdvancedData extends Facility {
   services?: string[]
 }
 
+export interface LabsFreeFilter {
+  from: string
+  to: string
+  assistanceIds: string
+  urgentAssistanceIds?: string
+  cityId?: string
+  searchDistance?: number
+  currentCoords?: string
+  facilityIds?: string
+  sort?: 'CHEAP' | 'EXPENSIVE' | 'DISTANCE'
+  page?: number
+  size?: number
+}
+
+export interface LabFreeTimeslotsFilter {
+  facilityId: string
+  from: string
+  to: string
+  assistanceIds: string
+}
+
+export interface LabAdvancedDataFilter {
+  facilityId: string
+  from: string
+  to: string
+  assistanceIds: string
+  urgentAssistanceIds?: string
+}
+
+export interface NetworkLabsFilter {
+  searchDistance?: number
+  currentCoords?: string
+  assistanceIds?: string
+  page?: number
+  size?: number
+}
+
+export interface FacilityReview {
+  id: string
+  facilityId: string
+  userId?: string
+  userName?: string
+  rating: number
+  message?: string
+  anonymously?: boolean
+  createdAt?: string
+}
+
+export interface CreateFacilityReviewRequest {
+  facilityId: string
+  rating: number
+  anonymously?: boolean
+  message?: string
+  appointmentId?: number
+}
+
 // ─── Appointment ──────────────────────────────────────────────────────────────
+
+export type PaymentType = 'CASH' | 'PAYLINK' | 'APAY' | 'DRAFT'
+
+export interface PaymentData {
+  type: PaymentType
+  status?: 'PENDING' | 'PAID' | 'FAILED'
+  resultData?: { orderId?: string }
+}
+
+export type AppointmentState =
+  | 'NEED_CONFIRMATION'
+  | 'SCHEDULED'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'REJECTED'
+
+export type CommunicationMethod = 'VIDEOCALL' | 'CHAT' | 'PHONE'
 
 export interface Appointment {
   id: string
-  doctorId: string
-  doctorName: string
+  doctorId?: string
+  doctorName?: string
   doctorSpeciality?: string
   doctorPhoto?: string
   facilityId?: string
   facilityName?: string
   date: string
   time: string
-  status: AppointmentStatus
-  type: 'clinic' | 'lab' | 'online'
+  state: AppointmentState
+  status?: AppointmentStatus
+  type?: 'clinic' | 'lab' | 'online'
+  category?: DoctorCategory | 'LAB'
+  assistanceId?: string
+  reason?: string
+  communicationMethod?: CommunicationMethod
+  paymentData?: PaymentData
 }
 
 export type AppointmentStatus =
@@ -171,20 +340,58 @@ export interface AppointmentAttachment {
 }
 
 export interface CreateClinicAppointmentRequest {
-  doctorId: string
-  facilityId: string
   date: string
   time: string
-  slotId: string
-  assistanceId?: string
+  doctorId: string
+  state: AppointmentState
+  assistanceId: string
+  reason?: string
+  paymentData: PaymentData
+}
+
+export interface CreateOnlineAppointmentRequest {
+  date: string
+  time: string
+  doctorId: string
+  state: AppointmentState
+  assistanceId: string
+  communicationMethod: CommunicationMethod
+  paymentData: PaymentData
 }
 
 export interface CreateLabAppointmentRequest {
-  facilityId: string
   date: string
   time: string
-  slotId: string
-  assistanceIds?: string[]
+  duration?: number
+  facilityId: string
+  assistances: number[]
+  urgentAssistances?: number[]
+  state: AppointmentState
+  paymentData: PaymentData
+}
+
+export interface EditAppointmentRequest {
+  date?: string
+  time?: string
+  facilityId?: string
+  paymentData?: PaymentData
+  performMethods?: Array<{ assistanceId: number; code: string }>
+}
+
+export interface UserAppointmentsFilter {
+  type?: 'ALL' | 'UPCOMING' | 'PAST'
+  category?: string
+  from?: string
+  to?: string
+  page?: number
+  size?: number
+}
+
+export interface AssistancePromoFilter {
+  page?: number
+  size?: number
+  dateFrom?: string
+  dateTo?: string
 }
 
 // ─── Catalogs ─────────────────────────────────────────────────────────────────
@@ -200,6 +407,37 @@ export interface Assistance {
   name: string
   specialityId?: string
   price?: number
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+
+export interface SetNotificationTokenRequest {
+  deviceId: string
+  platform: 'ios' | 'android'
+  app: string
+  token: string
+}
+
+export interface UpdateVoipTokenRequest {
+  deviceId: string
+  platform: 'ios' | 'android'
+  app: string
+  voipToken: string
+}
+
+// ─── Diia ─────────────────────────────────────────────────────────────────────
+
+export interface DiiaCreateDeeplinkRequest {
+  documentType: string
+  returnLink: string
+}
+
+// ─── Dobrodoc ─────────────────────────────────────────────────────────────────
+
+export interface DobrodocAppointmentUserData {
+  appointmentId: string
+  // shape depends on backend response
+  [key: string]: unknown
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────

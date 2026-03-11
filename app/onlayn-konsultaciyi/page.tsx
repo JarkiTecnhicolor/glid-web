@@ -53,7 +53,7 @@ function OnlineConsultationsContent() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['doctors-online', { search: searchParam, childOnly }],
-    queryFn: () => doctorsApi.getDoctors({ search: searchParam, isOnline: true, limit: 10 }),
+    queryFn: () => doctorsApi.getDoctorsFree({ lastName: searchParam, category: 'ONLINE', isChildren: childOnly || undefined, size: 10, page: 0 }),
   })
 
   const doctors = data?.data ?? []

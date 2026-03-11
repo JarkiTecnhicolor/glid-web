@@ -1,53 +1,67 @@
 import { apiClient } from './client'
-import type { Facility, LabAdvancedData, TimeSlot, PaginatedResponse } from '@/types/api'
-
-export interface FacilitiesFilter {
-  search?: string
-  type?: 'clinic' | 'lab'
-  address?: string
-  page?: number
-  limit?: number
-}
+import type {
+  Facility,
+  LabAdvancedData,
+  FacilityReview,
+  CreateFacilityReviewRequest,
+  LabsFreeFilter,
+  LabFreeTimeslotsFilter,
+  LabAdvancedDataFilter,
+  NetworkLabsFilter,
+  AssistancePromoFilter,
+  PaginatedResponse,
+} from '@/types/api'
 
 export const clinicsApi = {
-  getFacilities: (params?: FacilitiesFilter) =>
+  /** Get free labs with geo, dates, sorting */
+  getLabsFree: (params: LabsFreeFilter) =>
     apiClient
-      .get<PaginatedResponse<Facility>>('/facility-entities/facilities', { params })
+      .get('/facility-entities/labs-free', { params })
       .then((r) => r.data),
 
-  getLabAdvancedData: (facilityId: string) =>
+  /** Get lab advanced data (timeslots context) */
+  getLabAdvancedData: (params: LabAdvancedDataFilter) =>
     apiClient
-      .get<LabAdvancedData>('/facility-entities/lab-advanced-data', {
+      .get<LabAdvancedData>('/facility-entities/lab-advanced-data', { params })
+      .then((r) => r.data),
+
+  /** Get lab free timeslots */
+  getLabFreeTimeslots: (params: LabFreeTimeslotsFilter) =>
+    apiClient
+      .get('/facility-entities/lab-free-timeslots', { params })
+      .then((r) => r.data),
+
+  /** Get network labs with geo search */
+  getNetworkLabs: (params: NetworkLabsFilter) =>
+    apiClient
+      .get<Facility[]>('/facility-entities/network-labs', { params })
+      .then((r) => r.data),
+
+  /** Get facility reviews */
+  getFacilityReviews: (facilityId: string, params?: { page?: number; size?: number }) =>
+    apiClient
+      .get<PaginatedResponse<FacilityReview>>('/facility-entities/facility-reviews', {
+        params: { facilityId, ...params },
+      })
+      .then((r) => r.data),
+
+  /** Create facility review */
+  createFacilityReview: (data: CreateFacilityReviewRequest) =>
+    apiClient
+      .post('/facility-entities/facility-reviews', data)
+      .then((r) => r.data),
+
+  /** Get facility reviews distribution (rating breakdown) */
+  getFacilityReviewsDistribution: (facilityId: string) =>
+    apiClient
+      .get('/facility-entities/facility-reviews-distribution', {
         params: { facilityId },
       })
       .then((r) => r.data),
 
-  getLabFreeTimeslots: (facilityId: string, date?: string) =>
+  /** Get assistances promo list */
+  getAssistancesPromo: (params?: AssistancePromoFilter) =>
     apiClient
-      .get<TimeSlot[]>('/facility-entities/lab-free-timeslots', {
-        params: { facilityId, date },
-      })
-      .then((r) => r.data),
-
-  getNetworkLabs: (networkId: string) =>
-    apiClient
-      .get<Facility[]>('/facility-entities/network-labs', {
-        params: { networkId },
-      })
-      .then((r) => r.data),
-
-  getFacilityReviews: (facilityId: string) =>
-    apiClient
-      .get('/facility-entities/facility-reviews', { params: { facilityId } })
-      .then((r) => r.data),
-
-  createFacilityReview: (facilityId: string, data: { rating: number; text: string }) =>
-    apiClient
-      .post('/facility-entities/facility-reviews', { facilityId, ...data })
-      .then((r) => r.data),
-
-  getFacilityNetworks: () =>
-    apiClient
-      .get('/facility-entities/facility-networks')
+      .get('/facility-entities/assistances-promo', { params })
       .then((r) => r.data),
 }

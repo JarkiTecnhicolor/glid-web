@@ -30,12 +30,12 @@ function clearTokens() {
   localStorage.removeItem('glid_user')
 }
 
-// ─── Request interceptor — attach Bearer token ────────────────────────────────
+// ─── Request interceptor — attach X-Access-Token header ──────────────────────
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getAccessToken()
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers['X-Access-Token'] = token
   }
   return config
 })
@@ -61,7 +61,7 @@ apiClient.interceptors.response.use(
     if (isRefreshing) {
       return new Promise((resolve) => {
         refreshQueue.push((token: string) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`
+          originalRequest.headers['X-Access-Token'] = token
           resolve(apiClient(originalRequest))
         })
       })
@@ -73,8 +73,13 @@ apiClient.interceptors.response.use(
       const refreshToken = getRefreshToken()
       if (!refreshToken) throw new Error('No refresh token')
 
-      const { data } = await axios.get(`${BASE_URL}/user/refresh-token`, {
-        headers: { Authorization: `Bearer ${refreshToken}` },
+      const { data } = await axios.post(`${BASE_URL}/user/refresh-token`, {
+        token: refreshToken,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Access-Token': getAccessToken() ?? '',
+        },
       })
 
       const newAccessToken: string = data.accessToken
@@ -85,7 +90,7 @@ apiClient.interceptors.response.use(
       refreshQueue.forEach((cb) => cb(newAccessToken))
       refreshQueue = []
 
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+      originalRequest.headers['X-Access-Token'] = newAccessToken
       return apiClient(originalRequest)
     } catch {
       clearTokens()
