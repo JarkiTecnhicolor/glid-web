@@ -11,7 +11,7 @@ export function DoctorCard({ doctor }: Props) {
 
   return (
     <Link
-      href={`/likari/${doctor.id}`}
+      href={`/likari/${doctor.id}${doctor.specialityId ? `?specialtyId=${doctor.specialityId}` : ''}`}
       className="group flex gap-5 rounded-2xl bg-white border border-border p-5 transition-all duration-200 hover:-translate-y-0.5"
       style={{
         boxShadow: '0 2px 12px rgba(0,60,30,0.07)',

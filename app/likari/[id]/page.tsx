@@ -15,9 +15,12 @@ export default function DoctorProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>('info')
   const [bookingOpen, setBookingOpen] = useState(false)
 
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+  const specialtyId = searchParams.get('specialtyId') ?? undefined
+
   const { data: doctor, isLoading } = useQuery({
-    queryKey: ['doctor', id],
-    queryFn: () => doctorsApi.getDoctorAdvancedData({ doctorId: id }),
+    queryKey: ['doctor', id, specialtyId],
+    queryFn: () => doctorsApi.getDoctorAdvancedData({ doctorId: id, specialtyId }),
   })
 
   const { data: reviews } = useQuery({
@@ -94,7 +97,7 @@ export default function DoctorProfilePage() {
                   <span className="font-medium">{doctor.experience} р.</span>
                 </div>
               )}
-              {doctor.rating !== undefined && (
+              {doctor.rating != null && (
                 <div className="flex items-center gap-1">
                   <span className="text-glid-green">★</span>
                   <span className="font-medium">{doctor.rating.toFixed(1)}</span>
