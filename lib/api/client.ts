@@ -96,10 +96,11 @@ apiClient.interceptors.response.use(
       clearTokens()
       refreshQueue = []
       if (typeof window !== 'undefined') {
-        const isCabinet = window.location.pathname.startsWith('/cabinet')
-        if (isCabinet) {
-          window.location.href = '/auth/login'
-        }
+        // Clear Zustand persisted auth state
+        try { localStorage.removeItem('glid_auth') } catch {}
+        document.cookie = 'glid_access_token=; path=/; max-age=0'
+        const currentPath = window.location.pathname
+        window.location.href = `/auth/login?from=${encodeURIComponent(currentPath)}`
       }
       return Promise.reject(error)
     } finally {
