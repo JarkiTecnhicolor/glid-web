@@ -9,16 +9,17 @@ import { AppointmentCardSkeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { buttonVariants } from '@/components/ui/button'
+import type { Appointment } from '@/types/api'
 
 export default function CabinetPage() {
   const { user } = useAuthStore()
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['appointments', { status: 'pending', limit: 3 }],
-    queryFn: () => appointmentsApi.getUserAppointments({ status: 'pending', limit: 3 }),
+    queryKey: ['appointments', { type: 'UPCOMING', size: 3 }],
+    queryFn: () => appointmentsApi.getUserAppointments({ type: 'UPCOMING', size: 3 }),
   })
 
-  const upcoming = data?.data ?? []
+  const upcoming: Appointment[] = data?.data ?? []
 
   return (
     <div className="space-y-6">
