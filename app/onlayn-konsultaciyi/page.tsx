@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { DoctorCard } from '@/components/doctors/DoctorCard'
 import { doctorsApi } from '@/lib/api/doctors'
 import { cn } from '@/lib/utils'
+import type { Doctor } from '@/types/api'
 
 const HOW_TO_STEPS = [
   { num: '01', title: 'Знайдіть лікаря', desc: 'Використовуйте пошук або фільтри для підбору потрібного спеціаліста' },
@@ -56,7 +57,7 @@ function OnlineConsultationsContent() {
     queryFn: () => doctorsApi.getDoctorsFree({ lastName: searchParam, category: 'ONLINE', isChildren: childOnly || undefined, size: 10, page: 0 }),
   })
 
-  const doctors = data?.data ?? []
+  const doctors: Doctor[] = data?.data ?? []
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()

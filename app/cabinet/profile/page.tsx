@@ -57,7 +57,7 @@ export default function ProfilePage() {
   const updateProfile = useMutation({
     mutationFn: (data: FormValues) => authApi.updateProfileFull(data),
     onSuccess: (updated) => {
-      setUser(updated)
+      setUser(updated as Parameters<typeof setUser>[0])
       queryClient.invalidateQueries({ queryKey: ['profile'] })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)

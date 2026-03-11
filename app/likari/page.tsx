@@ -16,6 +16,7 @@ import { PartnerCTASection } from '@/components/home/PartnerCTASection'
 import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
 import { AxiosError } from 'axios'
+import type { Doctor } from '@/types/api'
 
 function DoctorsContent() {
   const router = useRouter()
@@ -35,7 +36,7 @@ function DoctorsContent() {
     retry: false,
   })
 
-  const doctors = data?.data ?? []
+  const doctors: Doctor[] = data?.data ?? []
   const total = data?.total ?? 0
 
   const isAuthError = error instanceof AxiosError && error.response?.status === 401

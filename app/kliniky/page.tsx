@@ -9,6 +9,7 @@ import { FacilityCard } from '@/components/clinics/FacilityCard'
 import { clinicsApi } from '@/lib/api/clinics'
 import { PartnerCTASection } from '@/components/home/PartnerCTASection'
 import { cn } from '@/lib/utils'
+import type { Facility } from '@/types/api'
 
 type FacilityType = 'all' | 'clinic' | 'lab'
 
@@ -23,16 +24,12 @@ function KlinikyContent() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['facilities', { search: searchParam, type: typeParam }],
-    queryFn: () =>
-      clinicsApi.getFacilities({
-        search: searchParam,
-        type: typeParam !== 'all' ? typeParam : undefined,
-        limit: 20,
-      }),
+    queryFn: () => clinicsApi.getNetworkLabs({ size: 20 }),
   })
 
-  const facilities = data?.data ?? []
-  const total = data?.total ?? 0
+  const allFacilities: Facility[] = Array.isArray(data) ? data : data?.data ?? []
+  const facilities = allFacilities
+  const total = facilities.length
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
