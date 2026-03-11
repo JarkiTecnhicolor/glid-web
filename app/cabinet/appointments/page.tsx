@@ -8,6 +8,7 @@ import { AppointmentCardSkeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { cn } from '@/lib/utils'
+import type { Appointment } from '@/types/api'
 
 type TypeFilter = 'ALL' | 'UPCOMING' | 'PAST'
 
@@ -31,7 +32,7 @@ export default function AppointmentsPage() {
     queryFn: () => appointmentsApi.getUserAppointments({ type }),
   })
 
-  const appointments = data?.data ?? []
+  const appointments: Appointment[] = data?.data ?? []
 
   return (
     <div>
