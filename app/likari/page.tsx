@@ -32,7 +32,12 @@ function DoctorsContent() {
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['doctors', { search, specialityId, isOnline }],
-    queryFn: () => doctorsApi.getDoctorsFree({ lastName: search, specialtyId: specialityId, category: isOnline ? 'ONLINE' : undefined, size: 20, page: 0 }),
+    queryFn: () => {
+      const today = new Date()
+      const from = today.toISOString().split('T')[0]
+      const to = new Date(today.getTime() + 14 * 86400000).toISOString().split('T')[0]
+      return doctorsApi.getDoctorsFree({ lastName: search, specialtyId: specialityId, category: isOnline ? 'ONLINE' : undefined, size: 20, page: 0, from, to })
+    },
     retry: false,
   })
 

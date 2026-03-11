@@ -29,7 +29,7 @@ export default function AppointmentsPage() {
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['appointments', { type }],
-    queryFn: () => appointmentsApi.getUserAppointments({ type }),
+    queryFn: () => appointmentsApi.getUserAppointments(type !== 'ALL' ? { type } : undefined),
   })
 
   const appointments: Appointment[] = data?.data ?? []

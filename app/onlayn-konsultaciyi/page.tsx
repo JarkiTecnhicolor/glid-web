@@ -54,7 +54,12 @@ function OnlineConsultationsContent() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['doctors-online', { search: searchParam, childOnly }],
-    queryFn: () => doctorsApi.getDoctorsFree({ lastName: searchParam, category: 'ONLINE', isChildren: childOnly || undefined, size: 10, page: 0 }),
+    queryFn: () => {
+      const today = new Date()
+      const from = today.toISOString().split('T')[0]
+      const to = new Date(today.getTime() + 14 * 86400000).toISOString().split('T')[0]
+      return doctorsApi.getDoctorsFree({ lastName: searchParam, category: 'ONLINE', isChildren: childOnly || undefined, size: 10, page: 0, from, to })
+    },
   })
 
   const doctors: Doctor[] = data?.data ?? []
