@@ -14,27 +14,56 @@ import type {
   PaginatedResponse,
 } from '@/types/api'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+/** Map raw API doctor object to our Doctor interface */
+function mapDoctor(raw: any): Doctor {
+  return {
+    id: String(raw.id),
+    firstName: raw.firstName ?? '',
+    lastName: raw.lastName ?? '',
+    middleName: raw.middleName,
+    speciality: raw.speciality ?? raw.specialty?.name ?? raw.specialtyName,
+    specialityId: raw.specialityId ?? raw.specialty?.id ?? raw.specialtyId,
+    experience: raw.experience,
+    photo: raw.photo ?? raw.avatarUrl ?? raw.facility?.avatarUrl,
+    rating: typeof raw.rating === 'number' ? raw.rating : undefined,
+    reviewCount: raw.reviewCount ?? raw.reviewsCount,
+    price: raw.price ?? raw.minPrice,
+    facilityId: raw.facilityId ?? raw.facility?.id ? String(raw.facility?.id) : undefined,
+    facilityName: raw.facilityName ?? raw.facility?.name,
+    isOnline: raw.isOnline ?? raw.category === 'ONLINE',
+    distance: raw.distance,
+    category: raw.category,
+  }
+}
+
+function extractDoctors(body: any): PaginatedResponse<Doctor> {
+  let rawList: any[] = []
+  let total = 0
+
+  if (Array.isArray(body)) {
+    rawList = body
+    total = body.length
+  } else if (body?.content && Array.isArray(body.content)) {
+    rawList = body.content
+    total = body.totalElements ?? body.content.length
+  } else if (body?.data && Array.isArray(body.data)) {
+    rawList = body.data
+    total = body.total ?? body.data.length
+  }
+
+  return { data: rawList.map(mapDoctor), total, page: 0, limit: rawList.length }
+}
+
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 export const doctorsApi = {
   /** Search free doctors with geo, dates, sorting, category */
   getDoctorsFree: (params: DoctorsFreeFilter) =>
     apiClient
       .get('/facility-entities/v2/doctors-free', { params })
-      .then((r) => {
-        const body = r.data
-        console.log('[doctors-free] raw response:', JSON.stringify(body).slice(0, 500))
-        // Normalize: API may return { data: [...], total } or [...] directly or { content: [...] }
-        if (Array.isArray(body)) {
-          return { data: body, total: body.length, page: 0, limit: body.length } as PaginatedResponse<Doctor>
-        }
-        if (body?.content && Array.isArray(body.content)) {
-          return { data: body.content, total: body.totalElements ?? body.content.length, page: body.number ?? 0, limit: body.size ?? body.content.length } as PaginatedResponse<Doctor>
-        }
-        if (body?.data && Array.isArray(body.data)) {
-          return body as PaginatedResponse<Doctor>
-        }
-        // Fallback
-        return { data: [], total: 0, page: 0, limit: 0 } as PaginatedResponse<Doctor>
-      }),
+      .then((r) => extractDoctors(r.data)),
 
   /** Get doctor facilities (clinics where the doctor works) */
   getDoctorFacilities: (params: DoctorFacilitiesFilter) =>

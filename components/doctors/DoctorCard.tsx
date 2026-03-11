@@ -86,7 +86,7 @@ export function DoctorCard({ doctor }: Props) {
         <div className="flex items-center justify-between gap-3 mt-1">
           {/* Rating */}
           <div className="flex items-center gap-1.5">
-            {doctor.rating !== undefined ? (
+            {doctor.rating != null ? (
               <>
                 <div className="flex gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
