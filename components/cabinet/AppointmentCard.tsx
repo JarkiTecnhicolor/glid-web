@@ -14,7 +14,7 @@ const STATUS_CONFIG: Record<AppointmentStatus, { label: string; className: strin
 }
 
 export function AppointmentCard({ appointment }: Props) {
-  const status = STATUS_CONFIG[appointment.status] ?? STATUS_CONFIG.pending
+  const status = (appointment.status ? STATUS_CONFIG[appointment.status] : undefined) ?? STATUS_CONFIG.pending
 
   const dateStr = new Date(appointment.date).toLocaleDateString('uk-UA', {
     weekday: 'short',

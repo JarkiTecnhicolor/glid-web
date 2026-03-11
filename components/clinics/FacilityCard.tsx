@@ -40,7 +40,7 @@ export function FacilityCard({ facility }: Props) {
             {facility.name}
           </h3>
           <span className="shrink-0 text-xs rounded-full bg-glid-green-light text-glid-green-dark px-2 py-0.5 font-medium">
-            {TYPE_LABEL[facility.type] ?? facility.type}
+            {(facility.type ? TYPE_LABEL[facility.type] : undefined) ?? facility.type ?? 'Заклад'}
           </span>
         </div>
 
