@@ -247,6 +247,7 @@ export default function DoctorProfilePage() {
       <BookingModal
         doctorId={id}
         doctorName={fullName}
+        specialtyId={specialtyId}
         open={bookingOpen}
         onClose={() => setBookingOpen(false)}
       />
