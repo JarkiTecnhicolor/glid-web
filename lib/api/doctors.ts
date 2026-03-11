@@ -18,8 +18,23 @@ export const doctorsApi = {
   /** Search free doctors with geo, dates, sorting, category */
   getDoctorsFree: (params: DoctorsFreeFilter) =>
     apiClient
-      .get<PaginatedResponse<Doctor>>('/facility-entities/v2/doctors-free', { params })
-      .then((r) => r.data),
+      .get('/facility-entities/v2/doctors-free', { params })
+      .then((r) => {
+        const body = r.data
+        console.log('[doctors-free] raw response:', JSON.stringify(body).slice(0, 500))
+        // Normalize: API may return { data: [...], total } or [...] directly or { content: [...] }
+        if (Array.isArray(body)) {
+          return { data: body, total: body.length, page: 0, limit: body.length } as PaginatedResponse<Doctor>
+        }
+        if (body?.content && Array.isArray(body.content)) {
+          return { data: body.content, total: body.totalElements ?? body.content.length, page: body.number ?? 0, limit: body.size ?? body.content.length } as PaginatedResponse<Doctor>
+        }
+        if (body?.data && Array.isArray(body.data)) {
+          return body as PaginatedResponse<Doctor>
+        }
+        // Fallback
+        return { data: [], total: 0, page: 0, limit: 0 } as PaginatedResponse<Doctor>
+      }),
 
   /** Get doctor facilities (clinics where the doctor works) */
   getDoctorFacilities: (params: DoctorFacilitiesFilter) =>
