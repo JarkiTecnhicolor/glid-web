@@ -15,8 +15,9 @@ export default function CabinetPage() {
   const { user } = useAuthStore()
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['appointments', { size: 3 }],
-    queryFn: () => appointmentsApi.getUserAppointments({ size: 3 }),
+    queryKey: ['appointments'],
+    queryFn: () => appointmentsApi.getUserAppointments(),
+    retry: false,
   })
 
   const upcoming: Appointment[] = data?.data ?? []
