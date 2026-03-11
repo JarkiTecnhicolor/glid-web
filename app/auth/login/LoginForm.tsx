@@ -11,32 +11,58 @@ import { Button } from '@/components/ui/button'
 import { authApi } from '@/lib/api/auth'
 import { useAuthStore } from '@/lib/store/auth'
 
-const schema = z.object({
-  login: z.string().min(1, 'Введіть телефон або email'),
-  password: z.string().min(1, 'Введіть пароль'),
+const phoneSchema = z.object({
+  phone: z
+    .string()
+    .min(10, 'Введіть номер телефону')
+    .regex(/^\+?[0-9\s\-()]+$/, 'Невірний формат телефону'),
 })
 
-type FormValues = z.infer<typeof schema>
+const codeSchema = z.object({
+  code: z
+    .string()
+    .length(4, 'Код має складатися з 4 цифр')
+    .regex(/^\d+$/, 'Тільки цифри'),
+})
+
+type PhoneValues = z.infer<typeof phoneSchema>
+type CodeValues = z.infer<typeof codeSchema>
 
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setTokens, setUser } = useAuthStore()
+
+  const [step, setStep] = useState<'phone' | 'code'>('phone')
+  const [phone, setPhone] = useState('')
+  const [channelId, setChannelId] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) })
+  const phoneForm = useForm<PhoneValues>({ resolver: zodResolver(phoneSchema) })
+  const codeForm = useForm<CodeValues>({ resolver: zodResolver(codeSchema) })
 
-  async function onSubmit(values: FormValues) {
+  async function onPhoneSubmit(values: PhoneValues) {
     setError(null)
     try {
-      const res = await authApi.signIn({ login: values.login, password: values.password })
-      setTokens(res.accessToken, res.refreshToken)
+      const res = await authApi.registerInitialOtpOnly({ phone: values.phone })
+      setPhone(values.phone)
+      setChannelId(res.channelId)
+      setStep('code')
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setError(msg || 'Помилка. Перевірте номер і спробуйте ще раз.')
+    }
+  }
 
-      // Sync token to cookie for middleware
+  async function onCodeSubmit(values: CodeValues) {
+    setError(null)
+    try {
+      const res = await authApi.registerConfirmOtpOnly({
+        phone,
+        confirmationCode: values.code,
+        channelId,
+      })
+      setTokens(res.accessToken, res.refreshToken)
       document.cookie = `glid_access_token=${res.accessToken}; path=/; max-age=3600`
 
       try {
@@ -50,7 +76,7 @@ export function LoginForm() {
       router.push(from)
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setError(msg || 'Неправильний логін або пароль')
+      setError(msg || 'Невірний код. Спробуйте ще раз.')
     }
   }
 
@@ -63,58 +89,69 @@ export function LoginForm() {
           </Link>
           <h1 className="mt-4 text-2xl font-semibold text-foreground">Вхід</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Введіть ваш телефон або email та пароль
+            {step === 'phone'
+              ? 'Введіть номер телефону для входу'
+              : <>Ми надіслали SMS з кодом на <strong className="text-foreground">{phone}</strong></>}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
-            <label htmlFor="login" className="text-sm font-medium text-foreground">
-              Телефон або email
-            </label>
-            <Input
-              id="login"
-              placeholder="+38 (0XX) XXX-XX-XX або email"
-              {...register('login')}
-              aria-invalid={!!errors.login}
-            />
-            {errors.login && (
-              <p className="text-xs text-destructive">{errors.login.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label htmlFor="password" className="text-sm font-medium text-foreground">
-                Пароль
+        {step === 'phone' ? (
+          <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
+            <div className="space-y-1.5">
+              <label htmlFor="phone" className="text-sm font-medium text-foreground">
+                Номер телефону
               </label>
-              <Link
-                href="/auth/reset-password"
-                className="text-xs text-primary hover:underline"
-              >
-                Забули пароль?
-              </Link>
+              <Input
+                id="phone"
+                placeholder="+38 (0XX) XXX-XX-XX"
+                {...phoneForm.register('phone')}
+                aria-invalid={!!phoneForm.formState.errors.phone}
+              />
+              {phoneForm.formState.errors.phone && (
+                <p className="text-xs text-destructive">{phoneForm.formState.errors.phone.message}</p>
+              )}
             </div>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              {...register('password')}
-              aria-invalid={!!errors.password}
-            />
-            {errors.password && (
-              <p className="text-xs text-destructive">{errors.password.message}</p>
-            )}
-          </div>
 
-          {error && (
-            <p className="text-sm text-destructive text-center">{error}</p>
-          )}
+            {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? 'Вхід…' : 'Увійти'}
-          </Button>
-        </form>
+            <Button type="submit" disabled={phoneForm.formState.isSubmitting} className="w-full">
+              {phoneForm.formState.isSubmitting ? 'Надсилання…' : 'Отримати код'}
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={codeForm.handleSubmit(onCodeSubmit)} className="space-y-4">
+            <div className="space-y-1.5">
+              <label htmlFor="code" className="text-sm font-medium text-foreground">
+                Код з SMS
+              </label>
+              <Input
+                id="code"
+                placeholder="0000"
+                maxLength={4}
+                inputMode="numeric"
+                {...codeForm.register('code')}
+                aria-invalid={!!codeForm.formState.errors.code}
+              />
+              {codeForm.formState.errors.code && (
+                <p className="text-xs text-destructive">{codeForm.formState.errors.code.message}</p>
+              )}
+            </div>
+
+            {error && <p className="text-sm text-destructive text-center">{error}</p>}
+
+            <Button type="submit" disabled={codeForm.formState.isSubmitting} className="w-full">
+              {codeForm.formState.isSubmitting ? 'Перевірка…' : 'Увійти'}
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => { setStep('phone'); setError(null) }}
+              className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Змінити номер
+            </button>
+          </form>
+        )}
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Немає акаунту?{' '}
